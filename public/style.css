@@ -2990,3 +2990,144 @@ body {
         width: 7px !important;
     }
 }
+/* =========================================================
+   PRAGYA CHAT - REAL MOBILE SCROLL
+   ONLY CHAT MESSAGES SCROLL
+   ========================================================= */
+
+@media (max-width: 800px) {
+
+    html,
+    body {
+        height: 100% !important;
+        min-height: 100% !important;
+        overflow: hidden !important;
+    }
+
+    /* Keep the whole app fixed */
+    .main-hud {
+        height: 100dvh !important;
+        min-height: 0 !important;
+
+        display: flex !important;
+        flex-direction: column !important;
+
+        overflow: hidden !important;
+    }
+
+    /* Keep PRAGYA core at the top */
+    .core-container {
+        flex: 0 0 190px !important;
+        height: 190px !important;
+        min-height: 190px !important;
+
+        overflow: hidden !important;
+    }
+
+    /* CHAT BOX */
+    .conversation-panel {
+        flex: 1 1 auto !important;
+
+        width: calc(100% - 20px) !important;
+        margin: 0 10px !important;
+
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+
+        display: flex !important;
+        flex-direction: column !important;
+
+        overflow: hidden !important;
+    }
+
+    /* CHAT HEADER */
+    .chat-header {
+        flex: 0 0 auto !important;
+    }
+
+    /* =====================================================
+       THIS IS THE ONLY SCROLLING AREA
+       ===================================================== */
+
+    .conversation-history {
+        flex: 1 1 auto !important;
+
+        width: 100% !important;
+
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: none !important;
+
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+
+        -webkit-overflow-scrolling: touch !important;
+
+        overscroll-behavior: contain !important;
+
+        display: flex !important;
+        flex-direction: column !important;
+
+        padding: 12px 10px 20px !important;
+        gap: 12px !important;
+
+        touch-action: pan-y !important;
+
+        scrollbar-width: thin !important;
+        scrollbar-color:
+            rgba(40, 220, 255, 0.8)
+            rgba(0, 0, 0, 0.25) !important;
+    }
+
+    /* Chrome / Android */
+    .conversation-history::-webkit-scrollbar {
+        width: 7px !important;
+    }
+
+    .conversation-history::-webkit-scrollbar-track {
+        background: rgba(0, 15, 25, 0.6) !important;
+    }
+
+    .conversation-history::-webkit-scrollbar-thumb {
+        background: rgba(40, 220, 255, 0.75) !important;
+        border-radius: 10px !important;
+    }
+
+    /* Messages */
+    .history-message {
+        flex: 0 0 auto !important;
+        max-width: 94% !important;
+    }
+
+    /* MESSAGE INPUT STAYS AT BOTTOM */
+    .text-composer {
+        flex: 0 0 auto !important;
+
+        width: 100% !important;
+
+        position: relative !important;
+        bottom: auto !important;
+        left: auto !important;
+    }
+}
+
+
+/* Smaller phones */
+@media (max-width: 500px) {
+
+    .core-container {
+        flex-basis: 175px !important;
+        height: 175px !important;
+        min-height: 175px !important;
+    }
+
+    .conversation-panel {
+        width: calc(100% - 12px) !important;
+        margin: 0 6px !important;
+    }
+
+    .conversation-history {
+        padding: 10px 8px 16px !important;
+    }
+}
