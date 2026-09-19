@@ -2890,3 +2890,103 @@ body {
         padding: 12px 8px 18px !important;
     }
 }
+/* =========================================================
+   PRAGYA CHAT - MOBILE CHAT SCROLL
+   Only the messages scroll
+   ========================================================= */
+
+@media (max-width: 800px) {
+
+    /* Keep the page itself fixed */
+    html,
+    body {
+        width: 100% !important;
+        height: 100% !important;
+        overflow: hidden !important;
+    }
+
+    /* Chat panel stays fixed */
+    .conversation-panel {
+        height: calc(100vh - 220px) !important;
+        min-height: 0 !important;
+        max-height: calc(100vh - 220px) !important;
+
+        overflow: hidden !important;
+
+        display: grid !important;
+        grid-template-rows: auto minmax(0, 1fr) auto !important;
+    }
+
+    /* ONLY THIS AREA SCROLLS */
+    .conversation-history {
+        height: 100% !important;
+        min-height: 0 !important;
+        max-height: none !important;
+
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior: contain !important;
+
+        display: flex !important;
+        flex-direction: column !important;
+
+        padding: 12px 10px 16px !important;
+        gap: 12px !important;
+
+        /* Make scrollbar visible */
+        scrollbar-width: auto !important;
+        scrollbar-color:
+            rgba(40, 220, 255, 0.75)
+            rgba(3, 15, 24, 0.7) !important;
+    }
+
+    /* Chrome / Android scrollbar */
+    .conversation-history::-webkit-scrollbar {
+        width: 8px !important;
+        display: block !important;
+    }
+
+    .conversation-history::-webkit-scrollbar-track {
+        background: rgba(3, 15, 24, 0.8) !important;
+        border-radius: 10px !important;
+    }
+
+    .conversation-history::-webkit-scrollbar-thumb {
+        background: rgba(40, 220, 255, 0.7) !important;
+        border-radius: 10px !important;
+        min-height: 45px !important;
+    }
+
+    /* Messages don't shrink */
+    .history-message {
+        flex-shrink: 0 !important;
+        max-width: 94% !important;
+    }
+
+    /* Input stays at bottom */
+    .text-composer {
+        position: relative !important;
+        bottom: auto !important;
+        flex-shrink: 0 !important;
+    }
+}
+
+
+/* Smaller phones */
+@media (max-width: 500px) {
+
+    .conversation-panel {
+        height: calc(100vh - 205px) !important;
+        max-height: calc(100vh - 205px) !important;
+    }
+
+    .conversation-history {
+        padding: 10px 8px 14px !important;
+    }
+
+    .conversation-history::-webkit-scrollbar {
+        width: 7px !important;
+    }
+}
