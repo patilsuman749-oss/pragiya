@@ -320,8 +320,12 @@ window.VoiceEngine = (() => {
         callbacks.onError?.(message);
     }
 
-    async function start(cb) {
+    function registerCallbacks(cb) {
         callbacks = cb || {};
+    }
+
+    async function start(cb) {
+        if (cb) callbacks = cb;
 
         if (!supported()) {
             throw new Error("Chrome or Edge with Web Speech support is required.");
@@ -365,6 +369,7 @@ window.VoiceEngine = (() => {
 
     return {
         supported,
+        registerCallbacks,
         start,
         stop,
         sendText

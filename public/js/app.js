@@ -266,6 +266,85 @@ function setMicButtonBusy(busy) {
 }
 
 /* =========================================================
+   VOICE ENGINE CALLBACKS
+   Registered immediately (not only when the mic is started)
+   so text-only messages before the first mic tap still render.
+   ========================================================= */
+
+const pragyaCallbacks = {
+    onUserInterim: (text) => {
+        if (text) showUserSpeech(text, { interim: true });
+    },
+
+    onUserFinal: (text) => {
+        removeTemporaryUserMessage();
+        if (text) showUserSpeech(text);
+    },
+
+    onAIThinking: () => {
+        setState("THINKING");
+        removeTemporaryUserMessage();
+        addChatMessage("ai", "Thinking...");
+    },
+
+    onAITranscript: (text) => {
+        if (text) showAIResponse(text);
+    },
+
+    onAIAudioStart: () => {
+        markAIResponding();
+    },
+
+    onTurnComplete: () => {
+        if (sessionStarted) {
+            setState("LISTENING");
+        } else {
+            setState("STANDBY");
+        }
+    },
+
+    onTextSubmitted: (text) => {
+        if (text) {
+            removeTemporaryUserMessage();
+            addChatMessage("user", text);
+        }
+        setState("THINKING");
+    },
+
+    onInterrupted: () => {
+        setState("LISTENING");
+    },
+
+    onReconnecting: () => {
+        setState("CONNECTING");
+        addChatMessage("ai", "Reconnecting to PRAGYA Voice...");
+    },
+
+    onEnd: () => {
+        sessionStarted = false;
+        starting = false;
+        setMicButtonBusy(false);
+        micButton?.classList.remove("active");
+        setState("STANDBY");
+        addChatMessage("ai", "PRAGYA Voice session ended.");
+    },
+
+    onError: (errorMessage) => {
+        console.error("PRAGYA VOICE ERROR:", errorMessage);
+        sessionStarted = false;
+        starting = false;
+        setMicButtonBusy(false);
+        micButton?.classList.remove("active");
+        setState("STANDBY");
+        addChatMessage("ai", `PRAGYA ERROR: ${errorMessage}`);
+    }
+};
+
+if (VoiceEngine?.registerCallbacks) {
+    VoiceEngine.registerCallbacks(pragyaCallbacks);
+}
+
+/* =========================================================
    START PRAGYA VOICE
    ========================================================= */
 
@@ -285,74 +364,7 @@ async function startPragya() {
     addChatMessage("ai", "PRAGYA Voice is connecting...");
 
     try {
-        await VoiceEngine.start({
-            onUserInterim: (text) => {
-                if (text) showUserSpeech(text, { interim: true });
-            },
-
-            onUserFinal: (text) => {
-                removeTemporaryUserMessage();
-                if (text) showUserSpeech(text);
-            },
-
-            onAIThinking: () => {
-                setState("THINKING");
-                removeTemporaryUserMessage();
-                addChatMessage("ai", "Thinking...");
-            },
-
-            onAITranscript: (text) => {
-                if (text) showAIResponse(text);
-            },
-
-            onAIAudioStart: () => {
-                markAIResponding();
-            },
-
-            onTurnComplete: () => {
-                if (sessionStarted) {
-                    setState("LISTENING");
-                } else {
-                    setState("STANDBY");
-                }
-            },
-
-            onTextSubmitted: (text) => {
-                if (text) {
-                    removeTemporaryUserMessage();
-                    addChatMessage("user", text);
-                }
-                setState("THINKING");
-            },
-
-            onInterrupted: () => {
-                setState("LISTENING");
-            },
-
-            onReconnecting: () => {
-                setState("CONNECTING");
-                addChatMessage("ai", "Reconnecting to PRAGYA Voice...");
-            },
-
-            onEnd: () => {
-                sessionStarted = false;
-                starting = false;
-                setMicButtonBusy(false);
-                micButton?.classList.remove("active");
-                setState("STANDBY");
-                addChatMessage("ai", "PRAGYA Voice session ended.");
-            },
-
-            onError: (errorMessage) => {
-                console.error("PRAGYA VOICE ERROR:", errorMessage);
-                sessionStarted = false;
-                starting = false;
-                setMicButtonBusy(false);
-                micButton?.classList.remove("active");
-                setState("STANDBY");
-                addChatMessage("ai", `PRAGYA ERROR: ${errorMessage}`);
-            }
-        });
+        await VoiceEngine.start(pragyaCallbacks);
 
         sessionStarted = true;
         starting = false;
