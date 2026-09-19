@@ -2991,8 +2991,8 @@ body {
     }
 }
 /* =========================================================
-   PRAGYA MOBILE - FINGER TOUCH CHAT SCROLL
-   Swipe with your finger inside the chat to scroll
+   PRAGYA - REAL MOBILE CHAT TOUCH SCROLL
+   ONLY THE CHAT MESSAGES SCROLL WITH YOUR FINGER
    ========================================================= */
 
 @media (max-width: 800px) {
@@ -3001,39 +3001,62 @@ body {
     body {
         width: 100% !important;
         height: 100% !important;
+
+        margin: 0 !important;
+        padding: 0 !important;
+
         overflow: hidden !important;
-        overscroll-behavior: none !important;
     }
 
+    /* Entire app fits exactly inside the phone screen */
     .main-hud {
         width: 100% !important;
         height: 100dvh !important;
         min-height: 0 !important;
 
-        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 8px !important;
 
         display: flex !important;
         flex-direction: column !important;
-    }
 
-    /* PRAGYA CORE */
-    .core-container {
-        flex: 0 0 180px !important;
-        height: 180px !important;
-        min-height: 180px !important;
+        gap: 8px !important;
 
         overflow: hidden !important;
     }
 
-    /* CHAT PANEL */
+    /* PRAGYA reactor area */
+    .core-container {
+        flex: 0 0 175px !important;
+
+        width: 100% !important;
+        height: 175px !important;
+        min-height: 175px !important;
+
+        position: relative !important;
+
+        overflow: hidden !important;
+    }
+
+    /* Hide waveform so it doesn't steal height */
+    .voice-waveform {
+        display: none !important;
+    }
+
+    /* =====================================================
+       CHAT PANEL
+       ===================================================== */
+
     .conversation-panel {
-        flex: 1 1 auto !important;
+        flex: 1 1 0 !important;
 
-        width: calc(100% - 12px) !important;
-        height: auto !important;
+        width: 100% !important;
+        height: 0 !important;
+
         min-height: 0 !important;
+        max-height: none !important;
 
-        margin: 0 6px !important;
+        margin: 0 !important;
 
         display: flex !important;
         flex-direction: column !important;
@@ -3043,87 +3066,105 @@ body {
         position: relative !important;
     }
 
-    /* CHAT HEADER */
+    /* Chat header stays fixed */
     .chat-header {
         flex: 0 0 auto !important;
+
         position: relative !important;
         z-index: 5 !important;
     }
 
     /* =====================================================
-       MAIN TOUCH SCROLL AREA
+       THIS IS THE ACTUAL TOUCH SCROLL AREA
        ===================================================== */
 
     .conversation-history {
-        flex: 1 1 auto !important;
+        flex: 1 1 0 !important;
 
         width: 100% !important;
 
-        height: auto !important;
+        height: 0 !important;
         min-height: 0 !important;
+
         max-height: none !important;
 
-        overflow-y: auto !important;
+        overflow-y: scroll !important;
         overflow-x: hidden !important;
 
-        /* THIS enables normal finger swiping */
+        /* IMPORTANT FOR PHONE FINGER SWIPING */
         touch-action: pan-y !important;
-
         -webkit-overflow-scrolling: touch !important;
 
         overscroll-behavior-y: contain !important;
 
         pointer-events: auto !important;
 
-        position: relative !important;
-        z-index: 10 !important;
-
         display: flex !important;
         flex-direction: column !important;
 
-        padding: 12px 10px 20px !important;
         gap: 12px !important;
 
-        /* Don't require a visible scrollbar */
+        padding: 12px 10px 20px !important;
+
         scrollbar-width: none !important;
     }
 
+    /* Hide scrollbar but KEEP scrolling */
     .conversation-history::-webkit-scrollbar {
-        display: none !important;
         width: 0 !important;
         height: 0 !important;
+        display: none !important;
     }
 
-    /* Make sure messages don't block touch scrolling */
+    /* Messages */
     .history-message {
         flex: 0 0 auto !important;
+
+        width: fit-content !important;
+        max-width: 94% !important;
+
         pointer-events: auto !important;
     }
 
-    /* INPUT */
+    /* Input stays below the scrolling messages */
     .text-composer {
         flex: 0 0 auto !important;
 
         width: 100% !important;
 
         position: relative !important;
+
+        left: auto !important;
+        bottom: auto !important;
+
         z-index: 20 !important;
+
+        margin: 0 !important;
     }
 }
 
 
-/* Small phones */
+/* =========================================================
+   SMALL PHONES
+   ========================================================= */
+
 @media (max-width: 500px) {
 
+    .main-hud {
+        height: 100dvh !important;
+        padding: 6px !important;
+    }
+
     .core-container {
-        flex-basis: 165px !important;
-        height: 165px !important;
-        min-height: 165px !important;
+        flex-basis: 160px !important;
+        height: 160px !important;
+        min-height: 160px !important;
     }
 
     .conversation-history {
-        padding: 10px 8px 18px !important;
+        padding: 10px 8px 16px !important;
 
         touch-action: pan-y !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 }
