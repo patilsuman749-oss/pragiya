@@ -2733,3 +2733,160 @@ body {
         min-height: 500px !important;
     }
 }
+/* =========================================================
+   PRAGYA MOBILE - FULL SCREEN SCROLL
+   Paste this at the VERY END of public/style.css
+   ========================================================= */
+
+@media (max-width: 800px) {
+
+    /* Allow the whole page to scroll */
+    html {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 100% !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+    }
+
+    body {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 100vh !important;
+
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior-y: auto !important;
+    }
+
+    /* Main page must grow instead of being locked to viewport */
+    .main-hud {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+
+        display: flex !important;
+        flex-direction: column !important;
+
+        overflow: visible !important;
+
+        padding: 8px !important;
+        gap: 10px !important;
+    }
+
+    /* Reactor section */
+    .core-container {
+        width: 100% !important;
+
+        flex: 0 0 auto !important;
+
+        min-height: 150px !important;
+        height: 150px !important;
+
+        overflow: visible !important;
+    }
+
+    /* Chat panel grows naturally */
+    .conversation-panel {
+        width: 100% !important;
+
+        flex: 0 0 auto !important;
+
+        height: auto !important;
+        min-height: 600px !important;
+
+        overflow: visible !important;
+
+        display: grid !important;
+
+        grid-template-rows:
+            auto
+            auto
+            auto !important;
+    }
+
+    /* IMPORTANT:
+       Chat history no longer gets its own scrollbar */
+    .conversation-history {
+        width: 100% !important;
+
+        height: auto !important;
+        min-height: 420px !important;
+        max-height: none !important;
+
+        overflow: visible !important;
+        overflow-y: visible !important;
+        overflow-x: hidden !important;
+
+        display: flex !important;
+        flex-direction: column !important;
+
+        padding: 14px 10px 20px !important;
+
+        gap: 12px !important;
+    }
+
+    /* Hide inner scrollbar completely */
+    .conversation-history::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+    }
+
+    .conversation-history {
+        scrollbar-width: none !important;
+    }
+
+    /* Messages stay in normal page flow */
+    .history-message {
+        flex-shrink: 0 !important;
+        max-width: 94% !important;
+    }
+
+    /* Input remains at bottom of chat panel */
+    .text-composer {
+        position: relative !important;
+
+        width: 100% !important;
+
+        bottom: auto !important;
+        left: auto !important;
+
+        flex-shrink: 0 !important;
+    }
+
+    /* Mic stays visible while page scrolls */
+    .mic-button {
+        position: fixed !important;
+
+        right: 14px !important;
+        bottom: calc(18px + env(safe-area-inset-bottom)) !important;
+
+        z-index: 9999 !important;
+    }
+}
+
+
+/* Smaller phones */
+@media (max-width: 500px) {
+
+    .main-hud {
+        padding: 6px !important;
+        gap: 8px !important;
+    }
+
+    .core-container {
+        height: 135px !important;
+        min-height: 135px !important;
+    }
+
+    .conversation-panel {
+        min-height: 560px !important;
+    }
+
+    .conversation-history {
+        min-height: 380px !important;
+        padding: 12px 8px 18px !important;
+    }
+}
