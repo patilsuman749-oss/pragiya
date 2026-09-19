@@ -157,42 +157,70 @@ window.VoiceEngine = (() => {
         return data.reply;
     }
 
+    let selectedVoice = null;
+
     function chooseMaleVoice() {
         if (!synth) return null;
 
         const voices = synth.getVoices();
-        if (!voices.length) return null;
+        if (!voices.length) return selectedVoice;
+
+        // Keep one selected voice for the current device/session so
+        // PRAGYA does not switch voices between replies.
+        if (
+            selectedVoice &&
+            voices.some((voice) => voice.name === selectedVoice.name && voice.lang === selectedVoice.lang)
+        ) {
+            return selectedVoice;
+        }
 
         const preferred = [
             "Google UK English Male",
             "Google US English Male",
+            "Google English Male",
             "Microsoft David",
+            "Microsoft Guy",
             "Microsoft Mark",
             "Microsoft George",
-            "Microsoft Ryan Online (Natural) - English (United Kingdom)",
-            "Microsoft Guy Online (Natural) - English (United States)",
+            "Microsoft Ryan",
+            "Microsoft Daniel",
+            "Microsoft Alex",
             "Ravi",
-            "Daniel",
             "David",
             "Mark",
             "George",
+            "Daniel",
+            "James",
+            "Guy",
+            "Ryan",
             "Alex"
         ];
 
-        const byPreferredName = preferred.find((name) =>
-            voices.some((voice) => voice.name.toLowerCase().includes(name.toLowerCase()))
-        );
-
-        if (byPreferredName) {
-            return voices.find((voice) =>
-                voice.name.toLowerCase().includes(byPreferredName.toLowerCase())
+        for (const name of preferred) {
+            const match = voices.find((voice) =>
+                voice.name.toLowerCase().includes(name.toLowerCase())
             );
+            if (match) {
+                selectedVoice = match;
+                return selectedVoice;
+            }
         }
 
         const english = voices.filter((voice) => /^en(-|_)/i.test(voice.lang));
-        return english.find((voice) => /male|david|mark|george|daniel|guy|ryan|ravi|alex/i.test(voice.name))
-            || english.find((voice) => /en-IN|en-GB|en-US/i.test(voice.lang))
-            || voices[0];
+
+        const maleLooking = english.find((voice) =>
+            /male|david|guy|mark|george|ryan|daniel|james|alex|ravi/i.test(voice.name)
+        );
+
+        selectedVoice =
+            maleLooking ||
+            english.find((voice) => /en-IN/i.test(voice.lang)) ||
+            english.find((voice) => /en-US/i.test(voice.lang)) ||
+            english.find((voice) => /en-GB/i.test(voice.lang)) ||
+            english[0] ||
+            voices[0];
+
+        return selectedVoice;
     }
 
     function speak(text) {
@@ -203,14 +231,19 @@ window.VoiceEngine = (() => {
 
         synth.cancel();
 
-        const utterance = new SpeechSynthesisUtterance(text);
+        const utterance = new SpeechSynthesisUtterance(String(text || "").trim());
         const voice = chooseMaleVoice();
 
-        if (voice) utterance.voice = voice;
+        if (voice) {
+            utterance.voice = voice;
+            utterance.lang = voice.lang;
+        } else {
+            utterance.lang = "en-IN";
+        }
 
-        utterance.lang = voice?.lang || "en-IN";
-        utterance.rate = 0.94;
-        utterance.pitch = 0.62;
+        // Deeper, slower male-style delivery.
+        utterance.rate = 0.88;
+        utterance.pitch = 0.52;
         utterance.volume = 1;
 
         utterance.onstart = () => callbacks.onAIAudioStart?.();
@@ -282,6 +315,11 @@ window.VoiceEngine = (() => {
         processingTurn = false;
         recognition = buildRecognition();
         synth?.getVoices();
+
+        // Mobile browsers can load voices asynchronously.
+        setTimeout(() => synth?.getVoices(), 300);
+        setTimeout(() => synth?.getVoices(), 1000);
+
         safeStartRecognition();
     }
 
