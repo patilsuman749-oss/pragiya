@@ -1,12 +1,6 @@
 /* =========================================================
    PRAGYA AI — VOICE + TEXT ENGINE
-   Fast REST Gemini backend + browser speech APIs.
-
-   Public API:
-     VoiceEngine.supported()
-     VoiceEngine.start(callbacks)
-     VoiceEngine.stop()
-     VoiceEngine.sendText(text)
+   Same voice preference + same speech settings across devices.
    ========================================================= */
 
 window.VoiceEngine = (() => {
@@ -22,6 +16,8 @@ window.VoiceEngine = (() => {
     let manualStop = false;
     let processingTurn = false;
     let callbacks = {};
+    let selectedVoice = null;
+    let voicePromise = null;
 
     const history = [];
     const MAX_HISTORY_TURNS = 4;
@@ -157,70 +153,95 @@ window.VoiceEngine = (() => {
         return data.reply;
     }
 
-    let selectedVoice = null;
+    /*
+     * Use one fixed priority order on every device.
+     * A browser can only use a voice that the device provides.
+     */
+    const PC_STYLE_VOICES = [
+        "Microsoft David",
+        "Microsoft Guy Online (Natural) - English (United States)",
+        "Microsoft Ryan Online (Natural) - English (United Kingdom)",
+        "Google UK English Male",
+        "Google US English Male",
+        "Google English",
+        "Ravi",
+        "David",
+        "Mark",
+        "George",
+        "Daniel",
+        "James",
+        "Alex"
+    ];
 
     function chooseMaleVoice() {
         if (!synth) return null;
 
-        const voices = synth.getVoices();
-        if (!voices.length) return selectedVoice;
+        const voices = synth.getVoices().filter(Boolean);
+        if (!voices.length) return null;
 
-        // Keep one selected voice for the current device/session so
-        // PRAGYA does not switch voices between replies.
-        if (
-            selectedVoice &&
-            voices.some((voice) => voice.name === selectedVoice.name && voice.lang === selectedVoice.lang)
-        ) {
+        /* Keep the same voice for the whole session. */
+        if (selectedVoice && voices.some(v => v.voiceURI === selectedVoice.voiceURI)) {
             return selectedVoice;
         }
 
-        const preferred = [
-            "Google UK English Male",
-            "Google US English Male",
-            "Google English Male",
-            "Microsoft David",
-            "Microsoft Guy",
-            "Microsoft Mark",
-            "Microsoft George",
-            "Microsoft Ryan",
-            "Microsoft Daniel",
-            "Microsoft Alex",
-            "Ravi",
-            "David",
-            "Mark",
-            "George",
-            "Daniel",
-            "James",
-            "Guy",
-            "Ryan",
-            "Alex"
-        ];
-
-        for (const name of preferred) {
-            const match = voices.find((voice) =>
-                voice.name.toLowerCase().includes(name.toLowerCase())
+        for (const wanted of PC_STYLE_VOICES) {
+            const match = voices.find(v =>
+                v.name.toLowerCase().includes(wanted.toLowerCase()) &&
+                /^en(-|_)/i.test(v.lang)
             );
+
             if (match) {
                 selectedVoice = match;
-                return selectedVoice;
+                return match;
             }
         }
 
-        const english = voices.filter((voice) => /^en(-|_)/i.test(voice.lang));
+        /* Male-looking English fallback. */
+        const english = voices.filter(v => /^en(-|_)/i.test(v.lang));
 
-        const maleLooking = english.find((voice) =>
-            /male|david|guy|mark|george|ryan|daniel|james|alex|ravi/i.test(voice.name)
+        const maleLooking = english.find(v =>
+            /male|david|guy|ryan|mark|george|daniel|james|ravi|alex/i.test(v.name)
         );
 
         selectedVoice =
             maleLooking ||
-            english.find((voice) => /en-IN/i.test(voice.lang)) ||
-            english.find((voice) => /en-US/i.test(voice.lang)) ||
-            english.find((voice) => /en-GB/i.test(voice.lang)) ||
+            english.find(v => /en-IN/i.test(v.lang)) ||
+            english.find(v => /en-US/i.test(v.lang)) ||
+            english.find(v => /en-GB/i.test(v.lang)) ||
             english[0] ||
-            voices[0];
+            null;
 
         return selectedVoice;
+    }
+
+    function loadVoices() {
+        if (!synth) return Promise.resolve([]);
+
+        const available = synth.getVoices();
+        if (available.length) {
+            chooseMaleVoice();
+            return Promise.resolve(available);
+        }
+
+        if (!voicePromise) {
+            voicePromise = new Promise(resolve => {
+                const done = () => {
+                    synth.removeEventListener("voiceschanged", done);
+                    chooseMaleVoice();
+                    resolve(synth.getVoices());
+                };
+
+                synth.addEventListener("voiceschanged", done);
+
+                setTimeout(() => {
+                    synth.removeEventListener("voiceschanged", done);
+                    chooseMaleVoice();
+                    resolve(synth.getVoices());
+                }, 1200);
+            });
+        }
+
+        return voicePromise;
     }
 
     function speak(text) {
@@ -241,10 +262,10 @@ window.VoiceEngine = (() => {
             utterance.lang = "en-IN";
         }
 
-        // Deeper, slower male-style delivery.
-        utterance.rate = 0.88;
-        utterance.pitch = 0.52;
-        utterance.volume = 1;
+        /* Same deeper PC-style speech settings on mobile. */
+        utterance.rate = 0.94;
+        utterance.pitch = 0.62;
+        utterance.volume = 1.0;
 
         utterance.onstart = () => callbacks.onAIAudioStart?.();
         utterance.onend = () => finishTurn();
@@ -314,12 +335,10 @@ window.VoiceEngine = (() => {
         active = true;
         processingTurn = false;
         recognition = buildRecognition();
-        synth?.getVoices();
 
-        // Mobile browsers can load voices asynchronously.
-        setTimeout(() => synth?.getVoices(), 300);
-        setTimeout(() => synth?.getVoices(), 1000);
-
+        /* Wait for the browser's voice list before listening. */
+        await loadVoices();
+        chooseMaleVoice();
         safeStartRecognition();
     }
 
@@ -335,7 +354,10 @@ window.VoiceEngine = (() => {
     }
 
     if (synth) {
-        synth.onvoiceschanged = () => synth.getVoices();
+        synth.addEventListener("voiceschanged", () => {
+            /* Refresh selection when mobile Chrome loads voices late. */
+            if (!selectedVoice) chooseMaleVoice();
+        });
     }
 
     return {
