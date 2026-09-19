@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>PRAGYA AI</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- =====================================================
+         BACKGROUND HUD
+    ====================================================== -->
+
+    <div class="hud-background"></div>
+
+    <div class="grid-floor"></div>
+
+    <div class="scan-line"></div>
+
+
+    <!-- =====================================================
+         TOP BAR
+    ====================================================== -->
+
+    <header class="top-bar">
+
+        <div class="brand">
+            <div class="brand-main">
+                PRAGYA
+            </div>
+
+            <div class="brand-sub">
+                ARTIFICIAL INTELLIGENCE SYSTEM
+            </div>
+        </div>
+
+
+        <div class="system-status">
+
+            <span class="status-light"></span>
+
+            <span id="systemStatus">
+                SYSTEM ONLINE
+            </span>
+
+        </div>
+
+
+        <div class="clock" id="clock">
+            00:00:00
+        </div>
+
+    </header>
+
+
+
+    <!-- =====================================================
+         MAIN HUD
+    ====================================================== -->
+
+    <main class="main-hud">
+
+
+        <!-- =================================================
+             CENTRAL AI CORE
+        ================================================== -->
+
+        <section class="core-container">
+
+
+            <!-- Outer HUD ring -->
+
+            <div class="hud-ring ring-one"></div>
+
+            <div class="hud-ring ring-two"></div>
+
+            <div class="hud-ring ring-three"></div>
+
+            <div class="hud-ring ring-four"></div>
+
+
+            <!-- Technical markings -->
+
+            <div class="technical-ring"></div>
+
+
+            <!-- Crosshair -->
+
+            <div class="crosshair horizontal"></div>
+
+            <div class="crosshair vertical"></div>
+
+
+            <!-- Central reactor -->
+
+            <div class="reactor">
+
+                <div class="reactor-outer"></div>
+
+                <div class="reactor-middle"></div>
+
+                <div class="reactor-core"></div>
+
+                <div class="reactor-glow"></div>
+
+            </div>
+
+
+            <!-- Core information -->
+
+            <div class="core-information">
+
+                <div class="core-name">
+                    PRAGYA
+                </div>
+
+                <div
+                    class="core-state"
+                    id="coreState"
+                >
+                    STANDBY
+                </div>
+
+            </div>
+
+
+            <!-- Microphone button -->
+
+            <button
+                id="micButton"
+                class="mic-button"
+                aria-label="Activate PRAGYA"
+            >
+
+                <span class="mic-symbol">
+                    🎙
+                </span>
+
+            </button>
+
+        </section>
+
+
+
+        <!-- =================================================
+             CONVERSATION AREA
+        ================================================== -->
+
+        <section class="conversation-panel" aria-label="PRAGYA chat">
+
+            <div class="chat-header">
+                <div>
+                    <span class="chat-title">PRAGYA CHAT</span>
+                    <span class="chat-subtitle">VOICE + TEXT</span>
+                </div>
+                <button class="clear-history-button" id="clearHistoryButton" type="button">
+                    CLEAR CHAT
+                </button>
+            </div>
+
+            <div class="conversation-history" id="conversationHistory" aria-live="polite" aria-label="PRAGYA conversation history">
+                <div class="history-empty" id="historyEmpty">
+                    Start a conversation with PRAGYA. Your messages and responses will stay here.
+                </div>
+            </div>
+
+            <form class="text-composer" id="textComposer" autocomplete="off">
+                <input
+                    id="textInput"
+                    type="text"
+                    placeholder="Message PRAGYA..."
+                    aria-label="Type a message to PRAGYA"
+                    maxlength="1000"
+                >
+                <button id="sendTextButton" type="submit" aria-label="Send text message">
+                    <span>SEND</span>
+                </button>
+            </form>
+
+        </section>
+
+
+        <!-- =================================================
+             VOICE WAVEFORM
+        ================================================== -->
+
+        <section
+            class="voice-waveform"
+            id="waveform"
+        >
+
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- =====================================================
+         JAVASCRIPT
+    ====================================================== -->
+
+    <script src="js/voice.js"></script>
+
+    <script src="js/app.js"></script>
+
+</body>
+</html>
