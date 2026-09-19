@@ -159,12 +159,19 @@ window.VoiceEngine = (() => {
     /*
      * Use one fixed priority order on every device.
      * A browser can only use a voice that the device provides.
+     *
+     * NOTE: Android's built-in Google TTS engine names its voices
+     * things like "Google US English" (no "Male"/"Female" suffix),
+     * so plain base names are listed first — they're the ones
+     * actually present on most phones.
      */
     const PC_STYLE_VOICES = [
+        "Google US English",
+        "Google UK English Male",
+        "Google UK English Female",
         "Microsoft David",
         "Microsoft Guy Online (Natural) - English (United States)",
         "Microsoft Ryan Online (Natural) - English (United Kingdom)",
-        "Google UK English Male",
         "Google US English Male",
         "Google English",
         "Ravi",
@@ -188,10 +195,16 @@ window.VoiceEngine = (() => {
         }
 
         for (const wanted of PC_STYLE_VOICES) {
-            const match = voices.find(v =>
-                v.name.toLowerCase().includes(wanted.toLowerCase()) &&
-                /^en(-|_)/i.test(v.lang)
-            );
+            const wantedLower = wanted.toLowerCase();
+
+            const match = voices.find((v) => {
+                if (!/^en(-|_)/i.test(v.lang)) return false;
+                const name = v.name.toLowerCase();
+                // Match either direction: a device voice can be a longer
+                // name that contains "wanted" (desktop), or a shorter
+                // base name that "wanted" contains (Android).
+                return name.includes(wantedLower) || wantedLower.includes(name);
+            });
 
             if (match) {
                 selectedVoice = match;
