@@ -2646,3 +2646,90 @@ body {
         overflow-x: hidden !important;
     }
 }
+/* ==========================================
+   PRAGYA MOBILE - FULL SCREEN SCROLL
+   Paste at the VERY END of style.css
+   ========================================== */
+
+@media (max-width: 800px) {
+
+    html,
+    body {
+        width: 100% !important;
+        min-height: 100% !important;
+        height: auto !important;
+
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* Allow the complete PRAGYA page to scroll */
+    .main-hud {
+        width: 100% !important;
+
+        height: auto !important;
+        min-height: 100vh !important;
+
+        overflow: visible !important;
+
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* Don't lock the chat panel to the screen */
+    .conversation-panel {
+        height: auto !important;
+        min-height: 500px !important;
+
+        overflow: visible !important;
+
+        flex: none !important;
+    }
+
+    /* Normal chat area */
+    .conversation-history {
+        height: auto !important;
+        max-height: none !important;
+        min-height: 350px !important;
+
+        overflow-y: visible !important;
+        overflow-x: hidden !important;
+    }
+
+    /* Let input stay in normal page flow */
+    .text-composer {
+        position: relative !important;
+
+        bottom: auto !important;
+    }
+
+    /* Mic stays accessible */
+    .mic-button {
+        position: fixed !important;
+
+        right: 14px !important;
+        bottom: calc(18px + env(safe-area-inset-bottom)) !important;
+
+        z-index: 1000 !important;
+    }
+}
+
+
+/* Smaller phones */
+@media (max-width: 500px) {
+
+    html,
+    body {
+        overflow-y: auto !important;
+    }
+
+    .main-hud {
+        min-height: 100vh !important;
+    }
+
+    .conversation-panel {
+        min-height: 500px !important;
+    }
+}
