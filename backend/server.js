@@ -163,16 +163,28 @@ app.post("/api/chat", async (req, res) => {
             }
         ];
 
-        const response = await ai.models.generateContent({
-            model: MODEL,
-            contents,
-            config: {
-                systemInstruction: SYSTEM_INSTRUCTION,
-                thinkingConfig: {
-                    thinkingLevel: "minimal"
+        // Give Gemini a hard deadline. Without this, a slow/hanging
+        // upstream call just sits here forever, and only the browser's
+        // own timeout ever fires — masking the real error.
+        const controller = new AbortController();
+        const deadline = setTimeout(() => controller.abort(), 18000);
+
+        let response;
+        try {
+            response = await ai.models.generateContent({
+                model: MODEL,
+                contents,
+                config: {
+                    systemInstruction: SYSTEM_INSTRUCTION,
+                    thinkingConfig: {
+                        thinkingLevel: "minimal"
+                    },
+                    abortSignal: controller.signal
                 }
-            }
-        });
+            });
+        } finally {
+            clearTimeout(deadline);
+        }
 
         const reply = (response.text || "").trim();
 
@@ -185,6 +197,14 @@ app.post("/api/chat", async (req, res) => {
         res.json({ reply, model: MODEL });
 
     } catch (error) {
+
+        if (error?.name === "AbortError") {
+            console.error("CHAT TIMEOUT: Gemini did not respond within 18s.");
+            return res.status(504).json({
+                error:
+                    "Gemini did not respond in time. This usually means the API key has hit its rate/quota limit or the model is overloaded — check your Google AI Studio quota page."
+            });
+        }
 
         console.error("CHAT ERROR:", error);
 

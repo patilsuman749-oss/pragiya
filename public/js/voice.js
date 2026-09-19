@@ -109,7 +109,10 @@ window.VoiceEngine = (() => {
 
     async function askPragya(message) {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000);
+        // Slightly longer than the server's own 18s deadline, so the
+        // real error from the backend (rate limit, auth, overload, etc.)
+        // has time to arrive instead of being replaced by this fallback.
+        const timeout = setTimeout(() => controller.abort(), 22000);
 
         let response;
         try {
@@ -121,7 +124,7 @@ window.VoiceEngine = (() => {
             });
         } catch (error) {
             if (error.name === "AbortError") {
-                throw new Error("PRAGYA is taking too long. Please try again.");
+                throw new Error("PRAGYA's backend didn't respond at all (no reply from the server). Check that the Netlify function is deployed and reachable.");
             }
             throw new Error("Could not reach the PRAGYA backend. Is the server running?");
         } finally {

@@ -83,16 +83,28 @@ export default async (request) => {
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-    const response = await ai.models.generateContent({
-      model: MODEL,
-      contents,
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        thinkingConfig: {
-          thinkingLevel: "minimal",
+    // Give Gemini a hard deadline. Without this, a slow/hanging upstream
+    // call just sits here until Netlify kills the function, and the
+    // browser's own timeout fires first — masking the real error.
+    const controller = new AbortController();
+    const deadline = setTimeout(() => controller.abort(), 18000);
+
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: MODEL,
+        contents,
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+          thinkingConfig: {
+            thinkingLevel: "minimal",
+          },
+          abortSignal: controller.signal,
         },
-      },
-    });
+      });
+    } finally {
+      clearTimeout(deadline);
+    }
 
     const reply = (response.text || "").trim();
 
@@ -102,6 +114,17 @@ export default async (request) => {
 
     return json({ reply, model: MODEL });
   } catch (error) {
+    if (error?.name === "AbortError") {
+      console.error("PRAGYA CHAT TIMEOUT: Gemini did not respond within 18s.");
+      return json(
+        {
+          error:
+            "Gemini did not respond in time. This usually means the API key has hit its rate/quota limit or the model is overloaded — check the Netlify function logs and your Google AI Studio quota page.",
+        },
+        504
+      );
+    }
+
     console.error("PRAGYA CHAT ERROR:", error);
     return json({ error: describeGeminiError(error) }, 500);
   }
