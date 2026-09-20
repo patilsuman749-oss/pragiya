@@ -571,63 +571,110 @@ body.speaking .status-pill {
     justify-content: center;
     padding: 24px;
 
-    background: var(--bg);
+    background:
+        radial-gradient(circle at 50% 20%, rgba(56, 232, 255, 0.08), transparent 55%),
+        var(--bg);
 }
 
 .login-card {
     width: 100%;
-    max-width: 360px;
+    max-width: 380px;
 
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 14px;
+    gap: 18px;
 
+    padding: 44px 32px 36px;
     text-align: center;
+
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+
+    animation: loginCardIn 0.35s ease-out;
+}
+
+.login-card .empty-orb {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 2px;
 }
 
 .login-title {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     color: #fff;
 }
 
 .login-sub {
+    max-width: 260px;
+    margin: -8px 0 4px;
+
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.55;
     color: var(--text-muted);
 }
 
 .google-signin-button {
+    width: 100%;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
 
-    padding: 11px 22px;
-    border-radius: var(--radius-full);
+    padding: 13px 22px;
+    border-radius: var(--radius-md);
 
     background: #fff;
     color: #1f1f1f;
-    font-size: 14px;
+    font-size: 14.5px;
     font-weight: 600;
 
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-    transition: transform 0.12s ease, opacity 0.12s ease;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
 .google-signin-button:hover {
     transform: translateY(-1px);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.38);
 }
 
 .google-signin-button:active {
     transform: translateY(0);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.google-signin-button:disabled {
+    opacity: 0.7;
+    transform: none;
 }
 
 .login-note {
     min-height: 16px;
-    font-size: 12px;
+    margin-top: -6px;
+    font-size: 12.5px;
+    color: var(--cyan-dim);
+}
+
+.login-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(20px + var(--safe-bottom));
+    z-index: 101;
+
+    text-align: center;
+    font-size: 11.5px;
+    letter-spacing: 0.5px;
     color: var(--text-muted);
+}
+
+@keyframes loginCardIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 
