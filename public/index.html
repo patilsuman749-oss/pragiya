@@ -90,6 +90,18 @@
 
                 <div class="header-actions">
                     <span class="clock" id="clock">00:00:00</span>
+                    <button class="icon-button" id="voiceToggleButton" type="button" aria-label="Mute PRAGYA's voice" title="Mute PRAGYA's voice">
+                        <svg id="voiceOnIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="4 9 8 9 12 5 12 19 8 15 4 15 4 9"></polygon>
+                            <path d="M16.5 8.5a5 5 0 0 1 0 7"></path>
+                            <path d="M19 6a9 9 0 0 1 0 12"></path>
+                        </svg>
+                        <svg id="voiceOffIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" hidden>
+                            <polygon points="4 9 8 9 12 5 12 19 8 15 4 15 4 9"></polygon>
+                            <line x1="16" y1="9" x2="22" y2="15"></line>
+                            <line x1="22" y1="9" x2="16" y2="15"></line>
+                        </svg>
+                    </button>
                     <button class="icon-button" id="clearHistoryButton" type="button" aria-label="Clear conversation" title="Clear conversation">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="3 6 5 6 21 6"></polyline>

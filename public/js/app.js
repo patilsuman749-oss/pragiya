@@ -34,6 +34,10 @@ const waveform = $("#waveform");
 const conversationHistory = $("#conversationHistory");
 const clearHistoryButton = $("#clearHistoryButton");
 
+const voiceToggleButton = $("#voiceToggleButton");
+const voiceOnIcon = $("#voiceOnIcon");
+const voiceOffIcon = $("#voiceOffIcon");
+
 const textComposer = $("#textComposer");
 const textInput = $("#textInput");
 const sendTextButton = $("#sendTextButton");
@@ -140,15 +144,53 @@ function renderChatList(chats) {
     if (chatListEmpty) chatListEmpty.style.display = chats.length ? "none" : "block";
 
     chats.forEach((chat) => {
-        const item = document.createElement("button");
-        item.type = "button";
+        const title = chat.title || "New chat";
+
+        const item = document.createElement("div");
         item.className = "chat-list-item";
         item.dataset.chatId = chat.id;
         if (chat.id === currentChatId) item.classList.add("active");
-        item.textContent = chat.title || "New chat";
-        item.addEventListener("click", () => openChat(chat.id));
+
+        const openButton = document.createElement("button");
+        openButton.type = "button";
+        openButton.className = "chat-list-open";
+        openButton.textContent = title;
+        openButton.addEventListener("click", () => openChat(chat.id));
+
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "chat-list-delete";
+        deleteButton.setAttribute("aria-label", `Delete "${title}"`);
+        deleteButton.title = "Delete chat";
+        deleteButton.innerHTML =
+            '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+            '<polyline points="3 6 5 6 21 6"></polyline>' +
+            '<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>' +
+            '<path d="M10 11v6"></path><path d="M14 11v6"></path>' +
+            '<path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>' +
+            '</svg>';
+        deleteButton.addEventListener("click", async (event) => {
+            event.stopPropagation();
+            await deleteChatWithConfirm(chat.id, title);
+        });
+
+        item.appendChild(openButton);
+        item.appendChild(deleteButton);
         chatList.appendChild(item);
     });
+}
+
+async function deleteChatWithConfirm(chatId, title) {
+    if (!currentUser) return;
+    const confirmed = window.confirm(`Delete "${title}"? This can't be undone.`);
+    if (!confirmed) return;
+
+    try {
+        await window.PragyaFirebase.deleteChat(currentUser.uid, chatId);
+        if (chatId === currentChatId) startNewChatState();
+    } catch (error) {
+        console.error("DELETE CHAT ERROR:", error);
+    }
 }
 
 function closeSidebarOnMobile() {
@@ -601,6 +643,27 @@ if (clearHistoryButton) {
     clearHistoryButton.addEventListener("click", () => {
         clearChatHistory();
         textInput?.focus();
+    });
+}
+
+function applyVoiceToggleUI(enabled) {
+    if (voiceOnIcon) voiceOnIcon.hidden = !enabled;
+    if (voiceOffIcon) voiceOffIcon.hidden = enabled;
+    if (voiceToggleButton) {
+        const label = enabled ? "Mute PRAGYA's voice" : "Unmute PRAGYA's voice";
+        voiceToggleButton.setAttribute("aria-label", label);
+        voiceToggleButton.title = label;
+        voiceToggleButton.classList.toggle("voice-muted", !enabled);
+    }
+}
+
+if (voiceToggleButton && VoiceEngine?.setVoiceEnabled) {
+    applyVoiceToggleUI(VoiceEngine.isVoiceEnabled());
+
+    voiceToggleButton.addEventListener("click", () => {
+        const nextEnabled = !VoiceEngine.isVoiceEnabled();
+        VoiceEngine.setVoiceEnabled(nextEnabled);
+        applyVoiceToggleUI(nextEnabled);
     });
 }
 

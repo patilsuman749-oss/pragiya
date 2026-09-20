@@ -165,6 +165,10 @@ input {
     background: rgba(255, 255, 255, 0.1);
 }
 
+#voiceToggleButton.voice-muted {
+    color: var(--cyan);
+}
+
 
 /* =========================================================
    CHAT SHELL
@@ -786,9 +790,29 @@ body.speaking .status-pill {
 }
 
 .chat-list-item {
-    text-align: left;
-    padding: 9px 10px;
+    position: relative;
+    display: flex;
+    align-items: center;
     border-radius: var(--radius-md);
+
+    transition: background 0.15s ease;
+}
+
+.chat-list-item:hover,
+.chat-list-item.active {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.chat-list-item.active {
+    background: var(--accent-glow);
+}
+
+.chat-list-open {
+    flex: 1 1 auto;
+    min-width: 0;
+
+    text-align: left;
+    padding: 9px 6px 9px 10px;
 
     font-size: 13px;
     color: var(--text-muted);
@@ -797,17 +821,50 @@ body.speaking .status-pill {
     overflow: hidden;
     text-overflow: ellipsis;
 
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: color 0.15s ease;
 }
 
-.chat-list-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+.chat-list-item:hover .chat-list-open,
+.chat-list-item.active .chat-list-open {
     color: var(--text);
 }
 
-.chat-list-item.active {
-    background: var(--accent-glow);
-    color: var(--text);
+.chat-list-delete {
+    flex: 0 0 auto;
+
+    width: 26px;
+    height: 26px;
+    margin-right: 6px;
+    border-radius: 8px;
+
+    display: grid;
+    place-items: center;
+
+    color: var(--text-muted);
+    opacity: 0;
+
+    transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.chat-list-item:hover .chat-list-delete,
+.chat-list-item.active .chat-list-delete {
+    opacity: 1;
+}
+
+.chat-list-delete:hover {
+    background: rgba(255, 89, 89, 0.15);
+    color: #ff8080;
+}
+
+.chat-list-delete:active {
+    background: rgba(255, 89, 89, 0.25);
+}
+
+@media (hover: none) {
+    /* No hover on touch devices — keep the delete button reachable. */
+    .chat-list-delete {
+        opacity: 0.6;
+    }
 }
 
 .chat-list-empty {

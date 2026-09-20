@@ -22,6 +22,27 @@ window.VoiceEngine = (() => {
     const history = [];
     const MAX_HISTORY_TURNS = 4;
 
+    const VOICE_PREF_KEY = "pragyaVoiceEnabled";
+    let voiceEnabled = true;
+    try {
+        const stored = localStorage.getItem(VOICE_PREF_KEY);
+        if (stored !== null) voiceEnabled = stored === "true";
+    } catch (e) {
+        // localStorage unavailable (private mode, etc.) — default to on.
+    }
+
+    function isVoiceEnabled() {
+        return voiceEnabled;
+    }
+
+    function setVoiceEnabled(enabled) {
+        voiceEnabled = Boolean(enabled);
+        try { localStorage.setItem(VOICE_PREF_KEY, String(voiceEnabled)); } catch (e) {}
+        if (!voiceEnabled) {
+            try { synth?.cancel(); } catch (e) {}
+        }
+    }
+
     function supported() {
         return Boolean(SpeechRecognition) && Boolean(synth);
     }
@@ -261,7 +282,7 @@ window.VoiceEngine = (() => {
     }
 
     function speak(text) {
-        if (!synth) {
+        if (!synth || !voiceEnabled) {
             finishTurn();
             return;
         }
@@ -385,6 +406,8 @@ window.VoiceEngine = (() => {
         registerCallbacks,
         start,
         stop,
-        sendText
+        sendText,
+        isVoiceEnabled,
+        setVoiceEnabled
     };
 })();
