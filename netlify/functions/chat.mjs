@@ -67,6 +67,26 @@ export default async (request) => {
 
   const history = Array.isArray(body?.history) ? body.history.slice(-8) : [];
 
+  // Optional photo from the camera button: { mimeType: "image/jpeg", data: "<base64, no data: prefix>" }
+  const image = body?.image;
+  const hasImage =
+    image &&
+    typeof image.mimeType === "string" &&
+    image.mimeType.startsWith("image/") &&
+    typeof image.data === "string" &&
+    image.data.length > 0;
+
+  // ~6MB of base64 is a generous cap for a single photo taken on a phone.
+  if (hasImage && image.data.length > 8_000_000) {
+    return json({ error: "That photo is too large. Try again with a smaller image." }, 400);
+  }
+
+  const finalParts = [];
+  if (hasImage) {
+    finalParts.push({ inlineData: { mimeType: image.mimeType, data: image.data } });
+  }
+  finalParts.push({ text: message || "What is in this photo?" });
+
   const contents = [
     ...history
       .filter((turn) => turn && typeof turn.text === "string" && turn.text.trim())
@@ -76,7 +96,7 @@ export default async (request) => {
       })),
     {
       role: "user",
-      parts: [{ text: message }],
+      parts: finalParts,
     },
   ];
 

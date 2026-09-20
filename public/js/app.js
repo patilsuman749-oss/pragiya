@@ -23,6 +23,12 @@ const signOutButton = $("#signOutButton");
 
 const micButton = $("#micButton");
 
+const cameraButton = $("#cameraButton");
+const cameraInput = $("#cameraInput");
+const imagePreviewBar = $("#imagePreviewBar");
+const imagePreviewThumb = $("#imagePreviewThumb");
+const removeImageButton = $("#removeImageButton");
+
 const coreState = $("#coreState");
 const systemStatus = $("#systemStatus");
 const clockElement = $("#clock");
@@ -46,6 +52,10 @@ let currentUser = null;
 let currentChatId = null;
 let chatMessages = [];
 let unsubscribeChatList = null;
+
+// { mimeType, data } (base64, no "data:" prefix) — set once a photo is
+// picked via the camera button, cleared once it's sent or removed.
+let pendingImage = null;
 
 /* =========================================================
    AUTH
@@ -507,6 +517,70 @@ function stopPragya() {
 }
 
 /* =========================================================
+   CAMERA — pick a photo, preview it, attach it to the next
+   message sent. The raw photo is only sent to Gemini for that
+   one reply — it is not saved to Firestore, only the question
+   text is (so chat history stays small).
+   ========================================================= */
+
+function fileToImagePart(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const dataUrl = String(reader.result || "");
+            const comma = dataUrl.indexOf(",");
+            if (comma === -1) return reject(new Error("Could not read that photo."));
+            resolve({
+                mimeType: file.type || "image/jpeg",
+                data: dataUrl.slice(comma + 1)
+            });
+        };
+        reader.onerror = () => reject(new Error("Could not read that photo."));
+        reader.readAsDataURL(file);
+    });
+}
+
+function showImagePreview(dataForThumb) {
+    if (!imagePreviewBar || !imagePreviewThumb) return;
+    imagePreviewThumb.src = dataForThumb;
+    imagePreviewBar.hidden = false;
+    cameraButton?.classList.add("has-image");
+}
+
+function clearPendingImage() {
+    pendingImage = null;
+    if (imagePreviewBar) imagePreviewBar.hidden = true;
+    if (imagePreviewThumb) imagePreviewThumb.src = "";
+    cameraButton?.classList.remove("has-image");
+    if (cameraInput) cameraInput.value = "";
+}
+
+if (cameraButton && cameraInput) {
+    cameraButton.addEventListener("click", () => cameraInput.click());
+
+    cameraInput.addEventListener("change", async () => {
+        const file = cameraInput.files?.[0];
+        if (!file) return;
+
+        try {
+            pendingImage = await fileToImagePart(file);
+            showImagePreview(`data:${pendingImage.mimeType};base64,${pendingImage.data}`);
+            textInput?.focus();
+        } catch (error) {
+            console.error("CAMERA READ ERROR:", error);
+            clearPendingImage();
+        }
+    });
+}
+
+if (removeImageButton) {
+    removeImageButton.addEventListener("click", () => {
+        clearPendingImage();
+        textInput?.focus();
+    });
+}
+
+/* =========================================================
    EVENTS
    ========================================================= */
 
@@ -525,13 +599,15 @@ if (textComposer) {
         event.preventDefault();
 
         const message = textInput?.value.trim();
-        if (!message || !VoiceEngine?.sendText) return;
+        const image = pendingImage;
+        if ((!message && !image) || !VoiceEngine?.sendText) return;
 
         textInput.value = "";
+        clearPendingImage();
         setTextBusy(true);
 
         try {
-            await VoiceEngine.sendText(message);
+            await VoiceEngine.sendText(message, image);
         } finally {
             setTextBusy(false);
             textInput?.focus();

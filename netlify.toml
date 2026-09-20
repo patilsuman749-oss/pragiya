@@ -13,3 +13,8 @@ status = 200
 from = "/api/health"
 to = "/.netlify/functions/health"
 status = 200
+
+[[redirects]]
+from = "/api/title"
+to = "/.netlify/functions/title"
+status = 200

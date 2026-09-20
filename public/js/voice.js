@@ -107,7 +107,7 @@ window.VoiceEngine = (() => {
         }
     }
 
-    async function askPragya(message) {
+    async function askPragya(message, image) {
         const controller = new AbortController();
         // Slightly longer than the server's own 18s deadline, so the
         // real error from the backend (rate limit, auth, overload, etc.)
@@ -119,7 +119,7 @@ window.VoiceEngine = (() => {
             response = await fetch("/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message, history }),
+                body: JSON.stringify({ message, history, image: image || undefined }),
                 signal: controller.signal
             });
         } catch (error) {
@@ -146,7 +146,7 @@ window.VoiceEngine = (() => {
             throw new Error("PRAGYA sent an empty reply.");
         }
 
-        history.push({ role: "user", text: message });
+        history.push({ role: "user", text: message || "What is in this photo?" });
         history.push({ role: "model", text: data.reply });
 
         while (history.length > MAX_HISTORY_TURNS * 2) {
@@ -296,9 +296,9 @@ window.VoiceEngine = (() => {
         safeStartRecognition();
     }
 
-    async function sendText(text) {
+    async function sendText(text, image) {
         const message = String(text || "").trim();
-        if (!message || processingTurn) return false;
+        if ((!message && !image) || processingTurn) return false;
 
         processingTurn = true;
 
@@ -306,11 +306,11 @@ window.VoiceEngine = (() => {
             try { recognition?.stop(); } catch (e) {}
         }
 
-        callbacks.onTextSubmitted?.(message);
+        callbacks.onTextSubmitted?.(message || "What is in this photo?");
         callbacks.onAIThinking?.();
 
         try {
-            const reply = await askPragya(message);
+            const reply = await askPragya(message, image);
             callbacks.onAITranscript?.(reply);
             speak(reply);
             return true;

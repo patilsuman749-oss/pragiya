@@ -87,13 +87,47 @@ async function deleteChat(uid, chatId) {
     await deleteDoc(doc(db, "users", uid, "chats", chatId));
 }
 
-async function renameChatIfDefault(uid, chatId, text) {
+/*
+ * Titles the chat from its topic instead of just echoing the first
+ * message. Runs once, right after the first AI reply is saved (so
+ * the model has an actual exchange to summarize, not just one line
+ * out of context). Falls back to the old "first words" behavior if
+ * the title API is unreachable, so a chat is never left untitled.
+ */
+async function maybeGenerateTitle(uid, chatId, aiReplyText) {
     const chatRef = doc(db, "users", uid, "chats", chatId);
     const snap = await getDoc(chatRef);
-    if (snap.exists() && (!snap.data().title || snap.data().title === "New chat")) {
-        const title = text.trim().slice(0, 45) || "New chat";
-        await updateDoc(chatRef, { title });
+    if (!snap.exists() || (snap.data().title && snap.data().title !== "New chat")) return;
+
+    const messagesRef = collection(db, "users", uid, "chats", chatId, "messages");
+    const q = query(messagesRef, orderBy("createdAt", "asc"));
+    const msgSnap = await getDocs(q);
+    const firstUserMessage = msgSnap.docs
+        .map((d) => d.data())
+        .find((m) => m.role === "user");
+
+    const firstUserText = (firstUserMessage?.text || "").trim();
+    if (!firstUserText) return;
+
+    try {
+        const response = await fetch("/api/title", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: firstUserText, reply: aiReplyText })
+        });
+        const data = await response.json();
+        const title = (data.title || "").trim();
+
+        if (title && title.toLowerCase() !== "new chat") {
+            await updateDoc(chatRef, { title: title.slice(0, 60) });
+            return;
+        }
+    } catch (error) {
+        console.error("TITLE GENERATION ERROR:", error);
     }
+
+    // Fallback: first words of the user's message, same as before.
+    await updateDoc(chatRef, { title: firstUserText.slice(0, 45) || "New chat" });
 }
 
 /* ---------------------------------------------------------
@@ -119,8 +153,8 @@ async function addMessage(uid, chatId, role, text) {
     const chatRef = doc(db, "users", uid, "chats", chatId);
     await updateDoc(chatRef, { updatedAt: serverTimestamp() });
 
-    if (role === "user") {
-        await renameChatIfDefault(uid, chatId, text);
+    if (role === "ai") {
+        await maybeGenerateTitle(uid, chatId, text);
     }
 }
 
