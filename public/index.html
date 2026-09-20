@@ -9,89 +9,160 @@
 <body>
 
     <!-- ============================================
-         HEADER
+         LOGIN OVERLAY (shown until signed in)
     ============================================= -->
-    <header class="top-bar">
-        <div class="brand">
-            <span class="brand-orb"></span>
-            <div class="brand-text">
-                <span class="brand-main">PRAGYA</span>
-                <span class="brand-sub" id="systemStatus">SYSTEM ONLINE</span>
-            </div>
-        </div>
-
-        <div class="header-actions">
-            <span class="clock" id="clock">00:00:00</span>
-            <button class="icon-button" id="clearHistoryButton" type="button" aria-label="Clear conversation" title="Clear conversation">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                    <path d="M10 11v6"></path>
-                    <path d="M14 11v6"></path>
-                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-card">
+            <span class="empty-orb"></span>
+            <h1 class="login-title">PRAGYA AI</h1>
+            <p class="login-sub">Sign in to save and access your chat history across devices.</p>
+            <button id="googleSignInButton" class="google-signin-button" type="button">
+                <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+                    <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.8 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/>
+                    <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+                    <path fill="#4CAF50" d="M24 44c5.5 0 10.4-1.9 14.3-5.1l-6.6-5.6C29.6 35 26.9 36 24 36c-5.3 0-9.8-3.3-11.3-8l-6.6 5.1C9.6 39.6 16.3 44 24 44z"/>
+                    <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.6l6.6 5.6C41.4 35.8 44 30.3 44 24c0-1.3-.1-2.7-.4-3.5z"/>
                 </svg>
+                Sign in with Google
             </button>
+            <p class="login-note" id="loginNote"></p>
         </div>
-    </header>
-
+    </div>
 
     <!-- ============================================
-         CHAT AREA
+         APP SHELL (sidebar + chat), hidden until signed in
     ============================================= -->
-    <main class="chat-shell">
+    <div class="app-shell" id="appShell" hidden>
 
-        <section class="conversation-panel" aria-label="PRAGYA chat">
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
-            <div class="conversation-history" id="conversationHistory" aria-live="polite" aria-label="PRAGYA conversation history">
-                <div class="history-empty" id="historyEmpty">
-                    <span class="empty-orb"></span>
-                    <p class="empty-title">PRAGYA AI</p>
-                    <p class="empty-sub">Ask me anything, or tap the mic to talk.</p>
-                </div>
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-top">
+                <button id="newChatButton" class="new-chat-button" type="button">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    New chat
+                </button>
             </div>
 
-            <div class="status-pill" id="coreState"></div>
+            <nav class="chat-list" id="chatList" aria-label="Chat history">
+                <p class="chat-list-empty" id="chatListEmpty">No chats yet</p>
+            </nav>
 
-            <form class="text-composer" id="textComposer" autocomplete="off">
-
-                <button id="micButton" class="mic-button" type="button" aria-label="Activate PRAGYA voice">
-                    <span class="mic-symbol" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="9" y="2" width="6" height="12" rx="3"></rect>
-                            <path d="M5 10a7 7 0 0 0 14 0"></path>
-                            <line x1="12" y1="19" x2="12" y2="22"></line>
-                        </svg>
-                    </span>
-                    <span class="mic-ring" aria-hidden="true"></span>
-                </button>
-
-                <span class="voice-waveform" id="waveform" aria-hidden="true">
-                    <span></span><span></span><span></span><span></span><span></span>
-                </span>
-
-                <input
-                    id="textInput"
-                    type="text"
-                    placeholder="Message PRAGYA..."
-                    aria-label="Type a message to PRAGYA"
-                    maxlength="1000"
-                    autocomplete="off"
-                >
-
-                <button id="sendTextButton" class="send-button" type="submit" aria-label="Send text message">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="12" y1="19" x2="12" y2="5"></line>
-                        <polyline points="5 12 12 5 19 12"></polyline>
+            <div class="sidebar-footer">
+                <div class="user-chip">
+                    <img id="userAvatar" class="user-avatar" alt="" referrerpolicy="no-referrer">
+                    <span id="userName" class="user-name">Account</span>
+                </div>
+                <button id="signOutButton" class="icon-button" type="button" aria-label="Sign out" title="Sign out">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
                     </svg>
                 </button>
+            </div>
+        </aside>
 
-            </form>
+        <div class="main-column">
 
-        </section>
+            <!-- ============================================
+                 HEADER
+            ============================================= -->
+            <header class="top-bar">
+                <div class="brand">
+                    <button class="icon-button sidebar-toggle" id="sidebarToggle" type="button" aria-label="Toggle chat history">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+                    <span class="brand-orb"></span>
+                    <div class="brand-text">
+                        <span class="brand-main">PRAGYA</span>
+                        <span class="brand-sub" id="systemStatus">SYSTEM ONLINE</span>
+                    </div>
+                </div>
 
-    </main>
+                <div class="header-actions">
+                    <span class="clock" id="clock">00:00:00</span>
+                    <button class="icon-button" id="clearHistoryButton" type="button" aria-label="Clear conversation" title="Clear conversation">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                            <path d="M10 11v6"></path>
+                            <path d="M14 11v6"></path>
+                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+                        </svg>
+                    </button>
+                </div>
+            </header>
 
-    <script src="js/voice.js"></script>
-    <script src="js/app.js"></script>
+
+            <!-- ============================================
+                 CHAT AREA
+            ============================================= -->
+            <main class="chat-shell">
+
+                <section class="conversation-panel" aria-label="PRAGYA chat">
+
+                    <div class="conversation-history" id="conversationHistory" aria-live="polite" aria-label="PRAGYA conversation history">
+                        <div class="history-empty" id="historyEmpty">
+                            <span class="empty-orb"></span>
+                            <p class="empty-title">PRAGYA AI</p>
+                            <p class="empty-sub">Ask me anything, or tap the mic to talk.</p>
+                        </div>
+                    </div>
+
+                    <div class="status-pill" id="coreState"></div>
+
+                    <form class="text-composer" id="textComposer" autocomplete="off">
+
+                        <button id="micButton" class="mic-button" type="button" aria-label="Activate PRAGYA voice">
+                            <span class="mic-symbol" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="9" y="2" width="6" height="12" rx="3"></rect>
+                                    <path d="M5 10a7 7 0 0 0 14 0"></path>
+                                    <line x1="12" y1="19" x2="12" y2="22"></line>
+                                </svg>
+                            </span>
+                            <span class="mic-ring" aria-hidden="true"></span>
+                        </button>
+
+                        <span class="voice-waveform" id="waveform" aria-hidden="true">
+                            <span></span><span></span><span></span><span></span><span></span>
+                        </span>
+
+                        <input
+                            id="textInput"
+                            type="text"
+                            placeholder="Message PRAGYA..."
+                            aria-label="Type a message to PRAGYA"
+                            maxlength="1000"
+                            autocomplete="off"
+                        >
+
+                        <button id="sendTextButton" class="send-button" type="submit" aria-label="Send text message">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="19" x2="12" y2="5"></line>
+                                <polyline points="5 12 12 5 19 12"></polyline>
+                            </svg>
+                        </button>
+
+                    </form>
+
+                </section>
+
+            </main>
+
+        </div>
+    </div>
+
+    <script type="module" src="js/firebase-init.js"></script>
+    <script src="js/voice.js" defer></script>
+    <script src="js/app.js" defer></script>
 </body>
 </html>

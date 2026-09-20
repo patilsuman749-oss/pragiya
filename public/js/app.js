@@ -1,70 +1,205 @@
 /* =========================================================
    PRAGYA AI
    FAST VOICE + TEXT APPLICATION CONTROLLER
-   With persistent on-screen chat history.
+   Google sign-in + Firestore-backed multi-chat history.
    ========================================================= */
 
 const $ = (selector) => document.querySelector(selector);
 
+const loginOverlay = $("#loginOverlay");
+const loginNote = $("#loginNote");
+const googleSignInButton = $("#googleSignInButton");
+
+const appShell = $("#appShell");
+const sidebar = $("#sidebar");
+const sidebarBackdrop = $("#sidebarBackdrop");
+const sidebarToggle = $("#sidebarToggle");
+const newChatButton = $("#newChatButton");
+const chatList = $("#chatList");
+const chatListEmpty = $("#chatListEmpty");
+const userAvatar = $("#userAvatar");
+const userName = $("#userName");
+const signOutButton = $("#signOutButton");
+
 const micButton = $("#micButton");
 
 const coreState = $("#coreState");
-const sessionState = $("#sessionState");
-
-const voiceStatus = $("#voiceStatus");
-const aiStatus = $("#aiStatus");
 const systemStatus = $("#systemStatus");
-const latency = $("#latency");
 const clockElement = $("#clock");
 const waveform = $("#waveform");
 
 const conversationHistory = $("#conversationHistory");
-const historyEmpty = $("#historyEmpty");
 const clearHistoryButton = $("#clearHistoryButton");
 
 const textComposer = $("#textComposer");
 const textInput = $("#textInput");
 const sendTextButton = $("#sendTextButton");
 
-const CHAT_STORAGE_KEY = "pragya_chat_history_v1";
-const MAX_UI_MESSAGES = 80;
+const MAX_UI_MESSAGES = 200;
 
 let sessionStarted = false;
 let starting = false;
 let lastUserSpeechTime = 0;
 let lastAIResponseTime = 0;
 
+let currentUser = null;
+let currentChatId = null;
+let chatMessages = [];
+let unsubscribeChatList = null;
+
 /* =========================================================
-   CHAT HISTORY
+   AUTH
    ========================================================= */
 
-let chatMessages = loadChatHistory();
+function waitForFirebase() {
+    return new Promise((resolve) => {
+        if (window.PragyaFirebase) return resolve(window.PragyaFirebase);
+        window.addEventListener("pragya-firebase-ready", () => resolve(window.PragyaFirebase), { once: true });
+    });
+}
 
-function loadChatHistory() {
-    try {
-        const saved = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || "[]");
-        if (!Array.isArray(saved)) return [];
-        return saved
-            .filter((item) =>
-                item &&
-                (item.role === "user" || item.role === "ai") &&
-                typeof item.text === "string" &&
-                item.text.trim()
-            )
-            .slice(-MAX_UI_MESSAGES);
-    } catch {
-        return [];
+async function initAuth() {
+    const Firebase = await waitForFirebase();
+
+    Firebase.watchAuthState(async (user) => {
+        currentUser = user;
+
+        if (user) {
+            loginOverlay.style.display = "none";
+            appShell.hidden = false;
+
+            userName.textContent = user.displayName || user.email || "Account";
+            if (user.photoURL) {
+                userAvatar.src = user.photoURL;
+                userAvatar.style.display = "block";
+            } else {
+                userAvatar.style.display = "none";
+            }
+
+            startChatListListener();
+            startNewChatState();
+        } else {
+            appShell.hidden = true;
+            loginOverlay.style.display = "flex";
+            if (unsubscribeChatList) unsubscribeChatList();
+            currentChatId = null;
+            chatMessages = [];
+        }
+    });
+
+    if (googleSignInButton) {
+        googleSignInButton.addEventListener("click", async () => {
+            googleSignInButton.disabled = true;
+            loginNote.textContent = "Opening Google sign-in...";
+            try {
+                await Firebase.signInWithGoogle();
+            } catch (error) {
+                console.error("SIGN-IN ERROR:", error);
+                loginNote.textContent = `Sign-in failed: ${error.message}`;
+            } finally {
+                googleSignInButton.disabled = false;
+            }
+        });
+    }
+
+    if (signOutButton) {
+        signOutButton.addEventListener("click", async () => {
+            try {
+                await Firebase.signOutUser();
+            } catch (error) {
+                console.error("SIGN-OUT ERROR:", error);
+            }
+        });
     }
 }
 
-function saveChatHistory() {
+/* =========================================================
+   SIDEBAR — CHAT LIST
+   ========================================================= */
+
+function startChatListListener() {
+    if (unsubscribeChatList) unsubscribeChatList();
+
+    unsubscribeChatList = window.PragyaFirebase.watchChatList(currentUser.uid, (chats) => {
+        renderChatList(chats);
+    });
+}
+
+function renderChatList(chats) {
+    if (!chatList) return;
+
+    chatList.querySelectorAll(".chat-list-item").forEach((el) => el.remove());
+
+    if (chatListEmpty) chatListEmpty.style.display = chats.length ? "none" : "block";
+
+    chats.forEach((chat) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "chat-list-item";
+        item.dataset.chatId = chat.id;
+        if (chat.id === currentChatId) item.classList.add("active");
+        item.textContent = chat.title || "New chat";
+        item.addEventListener("click", () => openChat(chat.id));
+        chatList.appendChild(item);
+    });
+}
+
+function closeSidebarOnMobile() {
+    sidebar?.classList.remove("open");
+    sidebarBackdrop?.classList.remove("open");
+}
+
+function updateActiveChatHighlight() {
+    chatList?.querySelectorAll(".chat-list-item").forEach((el) => {
+        el.classList.toggle("active", el.dataset.chatId === currentChatId);
+    });
+}
+
+/* =========================================================
+   CHAT SWITCHING
+   ========================================================= */
+
+function startNewChatState() {
+    currentChatId = null;
+    chatMessages = [];
+    renderChatHistory();
+    closeSidebarOnMobile();
+    updateActiveChatHighlight();
+}
+
+async function openChat(chatId) {
+    if (!currentUser) return;
+
+    currentChatId = chatId;
+    closeSidebarOnMobile();
+    updateActiveChatHighlight();
+
     try {
-        localStorage.setItem(
-            CHAT_STORAGE_KEY,
-            JSON.stringify(chatMessages.slice(-MAX_UI_MESSAGES))
-        );
-    } catch {
-        // Storage may be unavailable in some browser privacy modes.
+        const messages = await window.PragyaFirebase.loadMessages(currentUser.uid, chatId);
+        chatMessages = messages
+            .filter((m) => m.role === "user" || m.role === "ai")
+            .map((m) => ({ role: m.role, text: m.text }))
+            .slice(-MAX_UI_MESSAGES);
+        renderChatHistory();
+    } catch (error) {
+        console.error("LOAD CHAT ERROR:", error);
+    }
+}
+
+/* =========================================================
+   CHAT HISTORY (local render cache + Firestore persistence)
+   ========================================================= */
+
+async function persistMessage(role, text) {
+    if (!currentUser) return;
+
+    try {
+        if (!currentChatId) {
+            currentChatId = await window.PragyaFirebase.createNewChat(currentUser.uid);
+        }
+        await window.PragyaFirebase.addMessage(currentUser.uid, currentChatId, role, text);
+    } catch (error) {
+        console.error("SAVE MESSAGE ERROR:", error);
     }
 }
 
@@ -86,8 +221,11 @@ function addChatMessage(role, text, options = {}) {
     }
 
     chatMessages = chatMessages.slice(-MAX_UI_MESSAGES);
-    saveChatHistory();
     renderChatHistory();
+
+    if (options.persist !== false) {
+        persistMessage(role, clean);
+    }
 }
 
 function renderChatHistory() {
@@ -139,16 +277,12 @@ function updateLastAIMessage(text) {
     }
 
     chatMessages = chatMessages.slice(-MAX_UI_MESSAGES);
-    saveChatHistory();
     renderChatHistory();
+    persistMessage("ai", clean);
 }
 
 function clearChatHistory() {
-    chatMessages = [];
-    try {
-        localStorage.removeItem(CHAT_STORAGE_KEY);
-    } catch {}
-    renderChatHistory();
+    startNewChatState();
 }
 
 /* =========================================================
@@ -157,20 +291,6 @@ function clearChatHistory() {
 
 function setState(state) {
     if (coreState) coreState.textContent = state;
-    if (sessionState) sessionState.textContent = state;
-
-    if (voiceStatus) {
-        if (state === "CONNECTING") voiceStatus.textContent = "CONNECTING";
-        else if (state === "LISTENING") voiceStatus.textContent = "LISTENING";
-        else if (state === "SPEAKING") voiceStatus.textContent = "SPEAKING";
-        else voiceStatus.textContent = "READY";
-    }
-
-    if (aiStatus) {
-        if (state === "THINKING") aiStatus.textContent = "THINKING";
-        else if (state === "SPEAKING") aiStatus.textContent = "RESPONDING";
-        else aiStatus.textContent = "STANDBY";
-    }
 
     if (systemStatus) {
         if (state === "CONNECTING") systemStatus.textContent = "CONNECTING TO GEMINI";
@@ -245,13 +365,6 @@ function showAIResponse(text) {
 function markAIResponding() {
     lastAIResponseTime = performance.now();
     setState("SPEAKING");
-
-    if (latency) {
-        const responseTime = Math.round(lastAIResponseTime - lastUserSpeechTime);
-        if (responseTime >= 0 && responseTime < 60000) {
-            latency.textContent = `${responseTime} ms`;
-        }
-    }
 }
 
 function setTextBusy(busy) {
@@ -269,6 +382,8 @@ function setMicButtonBusy(busy) {
    VOICE ENGINE CALLBACKS
    Registered immediately (not only when the mic is started)
    so text-only messages before the first mic tap still render.
+   Status-only bubbles pass { persist: false } so they never
+   get written to Firestore as real chat content.
    ========================================================= */
 
 const pragyaCallbacks = {
@@ -284,7 +399,7 @@ const pragyaCallbacks = {
     onAIThinking: () => {
         setState("THINKING");
         removeTemporaryUserMessage();
-        addChatMessage("ai", "Thinking...");
+        addChatMessage("ai", "Thinking...", { persist: false });
     },
 
     onAITranscript: (text) => {
@@ -296,11 +411,7 @@ const pragyaCallbacks = {
     },
 
     onTurnComplete: () => {
-        if (sessionStarted) {
-            setState("LISTENING");
-        } else {
-            setState("STANDBY");
-        }
+        setState(sessionStarted ? "LISTENING" : "STANDBY");
     },
 
     onTextSubmitted: (text) => {
@@ -317,7 +428,7 @@ const pragyaCallbacks = {
 
     onReconnecting: () => {
         setState("CONNECTING");
-        addChatMessage("ai", "Reconnecting to PRAGYA Voice...");
+        addChatMessage("ai", "Reconnecting to PRAGYA Voice...", { persist: false });
     },
 
     onEnd: () => {
@@ -326,7 +437,7 @@ const pragyaCallbacks = {
         setMicButtonBusy(false);
         micButton?.classList.remove("active");
         setState("STANDBY");
-        addChatMessage("ai", "PRAGYA Voice session ended.");
+        addChatMessage("ai", "PRAGYA Voice session ended.", { persist: false });
     },
 
     onError: (errorMessage) => {
@@ -336,7 +447,7 @@ const pragyaCallbacks = {
         setMicButtonBusy(false);
         micButton?.classList.remove("active");
         setState("STANDBY");
-        addChatMessage("ai", `PRAGYA ERROR: ${errorMessage}`);
+        addChatMessage("ai", `PRAGYA ERROR: ${errorMessage}`, { persist: false });
     }
 };
 
@@ -345,14 +456,14 @@ if (VoiceEngine?.registerCallbacks) {
 }
 
 /* =========================================================
-   START PRAGYA VOICE
+   START / STOP PRAGYA VOICE
    ========================================================= */
 
 async function startPragya() {
     if (sessionStarted || starting) return;
 
     if (!VoiceEngine || !VoiceEngine.supported()) {
-        addChatMessage("ai", "Your browser cannot start the PRAGYA Voice voice engine.");
+        addChatMessage("ai", "Your browser cannot start the PRAGYA Voice voice engine.", { persist: false });
         return;
     }
 
@@ -361,7 +472,7 @@ async function startPragya() {
     micButton?.classList.add("active");
     setState("CONNECTING");
 
-    addChatMessage("ai", "PRAGYA Voice is connecting...");
+    addChatMessage("ai", "PRAGYA Voice is connecting...", { persist: false });
 
     try {
         await VoiceEngine.start(pragyaCallbacks);
@@ -377,13 +488,9 @@ async function startPragya() {
         setMicButtonBusy(false);
         micButton?.classList.remove("active");
         setState("STANDBY");
-        addChatMessage("ai", `Connection error: ${error.message}`);
+        addChatMessage("ai", `Connection error: ${error.message}`, { persist: false });
     }
 }
-
-/* =========================================================
-   STOP PRAGYA VOICE
-   ========================================================= */
 
 function stopPragya() {
     try {
@@ -439,6 +546,24 @@ if (clearHistoryButton) {
     });
 }
 
+if (newChatButton) {
+    newChatButton.addEventListener("click", () => {
+        startNewChatState();
+        textInput?.focus();
+    });
+}
+
+if (sidebarToggle) {
+    sidebarToggle.addEventListener("click", () => {
+        sidebar?.classList.toggle("open");
+        sidebarBackdrop?.classList.toggle("open");
+    });
+}
+
+if (sidebarBackdrop) {
+    sidebarBackdrop.addEventListener("click", closeSidebarOnMobile);
+}
+
 document.addEventListener("keydown", async (event) => {
     const activeElement = document.activeElement;
     if (
@@ -471,8 +596,9 @@ setInterval(updateClock, 1000);
 updateClock();
 renderChatHistory();
 setState("STANDBY");
+initAuth();
 
 console.log(
-    "%c PRAGYA AI — CHAT HISTORY ENABLED ",
+    "%c PRAGYA AI — GOOGLE LOGIN + FIRESTORE CHAT HISTORY ",
     "background:#03111d;color:#38e8ff;padding:10px;font-weight:bold;"
 );
