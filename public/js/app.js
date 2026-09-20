@@ -25,9 +25,6 @@ const micButton = $("#micButton");
 
 const cameraButton = $("#cameraButton");
 const cameraInput = $("#cameraInput");
-const imagePreviewBar = $("#imagePreviewBar");
-const imagePreviewThumb = $("#imagePreviewThumb");
-const removeImageButton = $("#removeImageButton");
 
 const coreState = $("#coreState");
 const systemStatus = $("#systemStatus");
@@ -517,10 +514,11 @@ function stopPragya() {
 }
 
 /* =========================================================
-   CAMERA — pick a photo, preview it, attach it to the next
-   message sent. The raw photo is only sent to Gemini for that
-   one reply — it is not saved to Firestore, only the question
-   text is (so chat history stays small).
+   CAMERA — pick a photo, attach it to the next message sent.
+   The camera button lights up (like the mic does) while a
+   photo is queued. The raw photo is only sent to Gemini for
+   that one reply — it is not saved to Firestore, only the
+   question text is (so chat history stays small).
    ========================================================= */
 
 function fileToImagePart(file) {
@@ -540,17 +538,8 @@ function fileToImagePart(file) {
     });
 }
 
-function showImagePreview(dataForThumb) {
-    if (!imagePreviewBar || !imagePreviewThumb) return;
-    imagePreviewThumb.src = dataForThumb;
-    imagePreviewBar.hidden = false;
-    cameraButton?.classList.add("has-image");
-}
-
 function clearPendingImage() {
     pendingImage = null;
-    if (imagePreviewBar) imagePreviewBar.hidden = true;
-    if (imagePreviewThumb) imagePreviewThumb.src = "";
     cameraButton?.classList.remove("has-image");
     if (cameraInput) cameraInput.value = "";
 }
@@ -564,19 +553,12 @@ if (cameraButton && cameraInput) {
 
         try {
             pendingImage = await fileToImagePart(file);
-            showImagePreview(`data:${pendingImage.mimeType};base64,${pendingImage.data}`);
+            cameraButton.classList.add("has-image");
             textInput?.focus();
         } catch (error) {
             console.error("CAMERA READ ERROR:", error);
             clearPendingImage();
         }
-    });
-}
-
-if (removeImageButton) {
-    removeImageButton.addEventListener("click", () => {
-        clearPendingImage();
-        textInput?.focus();
     });
 }
 
