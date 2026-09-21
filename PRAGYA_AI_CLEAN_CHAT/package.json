@@ -1,0 +1,12 @@
+{
+  "name": "pragya-ai-netlify",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PRAGYA AI frontend and Netlify Functions backend",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@google/genai": "^2.23.0"
+  }
+}
